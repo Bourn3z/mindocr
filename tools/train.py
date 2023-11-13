@@ -1,6 +1,26 @@
 """
 Model training
 """
+from mindocr.utils.train_step_wrapper import TrainOneStepWrapper
+from mindocr.utils.seed import set_seed
+from mindocr.utils.model_wrapper import NetWithLossWrapper
+from mindocr.utils.loss_scaler import get_loss_scales
+from mindocr.utils.logger import set_logger
+from mindocr.utils.ema import EMA
+from mindocr.utils.checkpoint import resume_train_network
+from mindocr.utils.callbacks import EvalSaveCallback
+from mindocr.scheduler import create_scheduler
+from mindocr.postprocess import build_postprocess
+from mindocr.optim import create_group_params, create_optimizer
+from mindocr.models import build_model
+from mindocr.metrics import build_metric
+from mindocr.losses import build_loss
+from mindocr.data import build_dataset
+from mindspore.communication import get_group_size, get_rank, init
+import mindspore as ms
+from addict import Dict
+import yaml
+from tools.arg_parser import parse_args_and_config
 import logging
 import os
 import shutil
@@ -9,38 +29,16 @@ import sys
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..")))
 
-from tools.arg_parser import parse_args_and_config
 
 args, config = parse_args_and_config()
 
-import yaml
-from addict import Dict
-
-import mindspore as ms
-from mindspore.communication import get_group_size, get_rank, init
-
-from mindocr.data import build_dataset
-from mindocr.losses import build_loss
-from mindocr.metrics import build_metric
-from mindocr.models import build_model
-from mindocr.optim import create_group_params, create_optimizer
-from mindocr.postprocess import build_postprocess
-from mindocr.scheduler import create_scheduler
-from mindocr.utils.callbacks import EvalSaveCallback
-from mindocr.utils.checkpoint import resume_train_network
-from mindocr.utils.ema import EMA
-from mindocr.utils.logger import set_logger
-from mindocr.utils.loss_scaler import get_loss_scales
-from mindocr.utils.model_wrapper import NetWithLossWrapper
-from mindocr.utils.seed import set_seed
-from mindocr.utils.train_step_wrapper import TrainOneStepWrapper
 
 logger = logging.getLogger("mindocr.train")
 
 
 def main(cfg):
     # init env
-    ms.set_context(mode=cfg.system.mode)
+    ms.set_context(mode=cfg.system.mode, jit_syntax_level=0,save_graphs= False,save_graphs_path='./graphs')
     if cfg.system.distribute:
         init()
         device_num = get_group_size()
@@ -170,7 +168,7 @@ def main(cfg):
     if cfg.system.val_while_train:
         # postprocess network prediction
         postprocessor = build_postprocess(cfg.postprocess)
-        metric = build_metric(cfg.metric, device_num=device_num)
+        metric = build_metric(cfg.metric, device_num=device_num,save_dir=cfg.train.ckpt_save_dir)
 
     # build callbacks
     eval_cb = EvalSaveCallback(
