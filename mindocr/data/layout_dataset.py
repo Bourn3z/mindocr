@@ -55,6 +55,22 @@ class KieDataset(DetDataset):
             │     ├── {image_file_name}
             ├── label_file.txt
     """
+import hashlib
+import json
+import logging
+import os
+import random
+from pathlib import Path
+
+import cv2
+import numpy as np
+from PIL import ExifTags, Image
+from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
+
+__all__ = ["PublayNetDataset"]
+
 
 
 # Get orientation exif tag
@@ -483,12 +499,15 @@ class PublayNetDataset:
                 mask = np.zeros(img.shape, np.uint8)
 
                 cv2.drawContours(mask, [segments[j].astype(np.int32)], -1, (255, 255, 255), cv2.FILLED)
-                sample_masks.append(mask[box[1]: box[3], box[0]: box[2], :])
+
+                sample_masks.append(mask[box[1] : box[3], box[0] : box[2], :])
+
 
                 result = cv2.bitwise_and(src1=img, src2=mask)
                 i = result > 0  # pixels to replace
                 mask[i] = result[i]  # cv2.imwrite('debug.jpg', img)  # debug
-                sample_images.append(mask[box[1]: box[3], box[0]: box[2], :])
+
+                sample_images.append(mask[box[1] : box[3], box[0] : box[2], :])
 
         return sample_labels, sample_images, sample_masks
 
