@@ -7,6 +7,7 @@ import mindspore as ms
 from mindocr.data.det_dataset import DetDataset, SynthTextDataset
 from mindocr.data.layout_dataset import KieDataset
 from mindocr.data.predict_dataset import PredictDataset
+from mindocr.data.layout_dataset import PublayNetDataset
 from mindocr.data.rec_dataset import RecDataset
 from mindocr.data.rec_lmdb_dataset import LMDBDataset
 
@@ -20,6 +21,7 @@ supported_dataset_types = [
     "LMDBDataset",
     "SynthTextDataset",
     "PredictDataset",
+    "PublayNetDataset",
     "KieDataset",
 ]
 

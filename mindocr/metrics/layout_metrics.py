@@ -1,3 +1,5 @@
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
 import logging
 import os
 from glob import glob
@@ -11,7 +13,7 @@ from mindspore import nn, ops, get_context
 from mindocr.utils.misc import AllReduce
 from mindocr.utils.utility import Synchronizer
 
-__all__ = ["VQASerTokenMetric", "VQAReTokenMetric"]
+__all__ = ["VQASerTokenMetric", "VQAReTokenMetric", "YOLOv8Metric"]
 _logger = logging.getLogger(__name__)
 
 
@@ -33,22 +35,7 @@ class VQASerTokenMetric(nn.Metric):
     def eval(self):
         gt_list = self.gt_list
         pred_list = self.pred_list
-        # device_id = get_context("device_id")
-        # metrics = {
-        #     "precision": precision_score(gt_list, pred_list),
-        #     "recall": recall_score(gt_list, pred_list),
-        #     "hmean": f1_score(gt_list, pred_list),
-        # }
-        # if device_id != 0:
-        #     print(f"device_id:{device_id}")
-        #     return metrics
-        # else:
-        #     print(f"device_id:{device_id}")
-        #     return {
-        #         "precision": 99.99,
-        #         "recall": 99.99,
-        #         "hmean": 99.99
-        #     }
+
         if self.synchronizer:
             eval_dir = os.path.join(self.save_dir, 'eval_tmp')
             os.makedirs(eval_dir, exist_ok=True)
@@ -65,8 +52,8 @@ class VQASerTokenMetric(nn.Metric):
             for e_file in eval_files:
                 with open(e_file, 'r') as fp:
                     eval_info = json.load(fp)
-                    gt_list+=eval_info['gt_list']
-                    pred_list+=eval_info['pred_list']
+                    gt_list += eval_info['gt_list']
+                    pred_list += eval_info['pred_list']
 
         metrics = {
             "precision": precision_score(gt_list, pred_list),
@@ -232,3 +219,28 @@ class VQAReTokenMetric(nn.Metric):
         scores["ALL"]["Macro_r"] = np.mean([scores[ent_type]["r"] for ent_type in relation_types])
 
         return scores
+
+
+class YOLOv8Metric(object):
+    """Compute the mean average precision."""
+
+    def __init__(self, annotations_path, device_num=1):
+        self.annotations_path = annotations_path
+        self.anno = COCO(annotations_path)  # init annotations api
+        self.metric_names = ["map"]
+        self.result_dicts = list()
+
+    def update(self, preds, gt):
+        self.result_dicts.extend(preds)
+
+    def eval(self):
+        pred = self.anno.loadRes(self.result_dicts)  # init predictions api
+        coco_eval = COCOeval(self.anno, pred, "bbox")
+        coco_eval.evaluate()
+        coco_eval.accumulate()
+        coco_eval.summarize()
+        map_result = coco_eval.stats[0]
+        return {"map": map_result}
+
+    def clear(self):
+        self.result_dicts = list()

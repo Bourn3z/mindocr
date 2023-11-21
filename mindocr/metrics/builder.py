@@ -1,7 +1,7 @@
 from . import cls_metrics, det_metrics, layout_metrics, rec_metrics
 from .cls_metrics import *
 from .det_metrics import *
-from .layout_metrics import *
+from .layout_metrics import YOLOv8Metric, VQASerTokenMetric, VQAReTokenMetric
 from .rec_metrics import *
 
 __all__ = ["build_metric"]

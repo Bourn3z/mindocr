@@ -1,3 +1,8 @@
+from mindocr.losses.rec_loss import AttentionLoss, CTCLoss, SARLoss, VisionLANLoss
+from mindocr.losses.layout_loss import LossFromOutput, VQASerTokenLayoutLMLoss
+from mindocr.losses.det_loss import DBLoss, EASTLoss, FCELoss, PSEDiceLoss
+from mindocr.losses.cls_loss import CrossEntropySmooth
+from mindocr.losses.abinet_loss import ABINetLoss
 __all__ = ["build_loss"]
 
 supported_losses = [
@@ -13,13 +18,9 @@ supported_losses = [
     "VisionLANLoss",
     "VQASerTokenLayoutLMLoss",
     "LossFromOutput",
+    "YOLOv8Loss",
+    "MultiLoss",
 ]
-
-from .abinet_loss import ABINetLoss
-from .cls_loss import CrossEntropySmooth
-from .det_loss import DBLoss, EASTLoss, FCELoss, PSEDiceLoss
-from .layout_loss import LossFromOutput, VQASerTokenLayoutLMLoss
-from .rec_loss import AttentionLoss, CTCLoss, SARLoss, VisionLANLoss
 
 
 def build_loss(name, **kwargs):
