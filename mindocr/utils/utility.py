@@ -1,6 +1,7 @@
-from mindspore.ops import AllReduce
-from mindspore import Tensor
 import numpy as np
+
+from mindspore import Tensor
+from mindspore.ops import AllReduce
 
 
 def load_vqa_bio_label_maps(label_map_path):
@@ -35,5 +36,7 @@ class Synchronizer:
             sync = self.all_reduce(sync)
             sync = sync.asnumpy()[0]
             if sync != self.rank_size:
-                raise ValueError(f"For Synchronizer, the sync value is not equal to rank size {self.rank_size}. "
-                                 f"There might be wrong with the distributed devices.")
+                raise ValueError(
+                    f"For Synchronizer, the sync value is not equal to rank size {self.rank_size}. "
+                    f"There might be wrong with the distributed devices."
+                )

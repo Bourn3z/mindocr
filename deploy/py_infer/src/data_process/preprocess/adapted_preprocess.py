@@ -1,7 +1,9 @@
 # The data preprocess customized for inference needs to be imported here
 
-from deploy.py_infer.src.data_process.preprocess.transforms import *  # noqa
+from .transforms import *  # noqa
 
+# TODO: remove gear_supported_list
+# some operations that support dynamic image size,
 gear_supported_list = [
     "DetResize",
     "DetResizeNormForInfer",

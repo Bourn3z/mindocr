@@ -5,11 +5,9 @@ from . import (  # rec_abinet_postprocess,
     det_fce_postprocess,
     det_pse_postprocess,
     layout_postprocess,
+    layout_token_ser_postprocess,
     rec_abinet_postprocess,
     rec_postprocess,
-    layout_postprocess,
-    layout_token_re_postprocess,
-    layout_token_ser_postprocess,
 )
 from .cls_postprocess import *
 from .det_db_postprocess import *
@@ -17,10 +15,9 @@ from .det_east_postprocess import *
 from .det_fce_postprocess import *
 from .det_pse_postprocess import *
 from .layout_postprocess import YOLOv8Postprocess
+from .layout_token_ser_postprocess import VQASerTokenLayoutLMPostProcess
 from .rec_abinet_postprocess import *
 from .rec_postprocess import *
-from .layout_token_re_postprocess import *
-from .layout_token_ser_postprocess import *
 
 __all__ = ["build_postprocess"]
 
@@ -32,7 +29,6 @@ supported_postprocess = (
     + cls_postprocess.__all__
     + rec_abinet_postprocess.__all__
     + det_fce_postprocess.__all__
-    + layout_token_re_postprocess.__all__
     + layout_token_ser_postprocess.__all__
     + layout_postprocess.__all__
 )

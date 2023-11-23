@@ -62,16 +62,12 @@ def generate_kie_inputs(data_shape):
     return inputs
 
 
-def generate_common_inputs(name, data_shape, is_dynamic_shape, model_type):
+def generate_common_inputs(data_shape, is_dynamic_shape, model_type):
     if is_dynamic_shape:
         if model_type == "det":
             x = ms.Tensor(shape=[None, 3, None, None], dtype=ms.float32)
-        elif model_type == "rec":
-            h_map = {"master_resnet31": 48}
-            h = h_map.get(name, 32)
-            x = ms.Tensor(shape=[None, 3, h, None], dtype=ms.float32)
         else:
-            x = ms.Tensor(shape=[None, 3, 48, 192], dtype=ms.float32)
+            x = ms.Tensor(shape=[None, 3, 32, None], dtype=ms.float32)
     else:
         h, w = data_shape
         bs, c = 1, 3
@@ -106,10 +102,13 @@ def export(model_name_or_config, data_shape, local_ckpt_path, save_dir, is_dynam
     if model_type == "kie":
         inputs = generate_kie_inputs(data_shape)
     else:
-        inputs = generate_common_inputs(name, data_shape, is_dynamic_shape, model_type)
+        inputs = generate_common_inputs(data_shape, is_dynamic_shape, model_type)
 
     output_path = os.path.join(save_dir, name) + ".mindir"
-    ms.export(net, *inputs, file_name=output_path, file_format="MINDIR")
+    if model_type == "kie":
+        ms.export(net, *inputs, file_name=output_path, file_format="MINDIR")
+    else:
+        ms.export(net, inputs, file_name=output_path, file_format="MINDIR")
 
     logger.info(
         f"=> Finish exporting mindir file of {name} to {os.path.realpath(output_path)}."

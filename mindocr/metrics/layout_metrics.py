@@ -1,14 +1,14 @@
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
+import json
 import logging
 import os
 from glob import glob
-import json
 
 import numpy as np
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
 from seqeval.metrics import f1_score, precision_score, recall_score
 
-from mindspore import nn, ops, get_context
+from mindspore import get_context, nn
 
 from mindocr.utils.misc import AllReduce
 from mindocr.utils.utility import Synchronizer
@@ -37,23 +37,23 @@ class VQASerTokenMetric(nn.Metric):
         pred_list = self.pred_list
 
         if self.synchronizer:
-            eval_dir = os.path.join(self.save_dir, 'eval_tmp')
+            eval_dir = os.path.join(self.save_dir, "eval_tmp")
             os.makedirs(eval_dir, exist_ok=True)
 
             device_id = get_context("device_id")
-            eval_path = os.path.join(eval_dir, f'eval_result_{device_id}.txt')
-            with open(eval_path, 'w') as fp:
+            eval_path = os.path.join(eval_dir, f"eval_result_{device_id}.txt")
+            with open(eval_path, "w") as fp:
                 json.dump({"gt_list": gt_list, "pred_list": pred_list}, fp)
             self.synchronizer()
 
-            eval_files = glob(eval_dir+'/*')
+            eval_files = glob(eval_dir + "/*")
             gt_list = []
             pred_list = []
             for e_file in eval_files:
-                with open(e_file, 'r') as fp:
+                with open(e_file, "r") as fp:
                     eval_info = json.load(fp)
-                    gt_list += eval_info['gt_list']
-                    pred_list += eval_info['pred_list']
+                    gt_list += eval_info["gt_list"]
+                    pred_list += eval_info["pred_list"]
 
         metrics = {
             "precision": precision_score(gt_list, pred_list),
@@ -92,10 +92,10 @@ class VQAReTokenMetric(nn.Metric):
             entitie_list = self.entities_list[b]
             head_len = relation_list[0, 0]
             if head_len > 0:
-                entitie_start_list = entitie_list[1: entitie_list[0, 0] + 1, 0]
-                entitie_end_list = entitie_list[1: entitie_list[0, 1] + 1, 1]
-                entitie_label_list = entitie_list[1: entitie_list[0, 2] + 1, 2]
-                for head, tail in zip(relation_list[1: head_len + 1, 0], relation_list[1: head_len + 1, 1]):
+                entitie_start_list = entitie_list[1 : entitie_list[0, 0] + 1, 0]
+                entitie_end_list = entitie_list[1 : entitie_list[0, 1] + 1, 1]
+                entitie_label_list = entitie_list[1 : entitie_list[0, 2] + 1, 2]
+                for head, tail in zip(relation_list[1 : head_len + 1, 0], relation_list[1 : head_len + 1, 1]):
                     rel = {}
                     rel["head_id"] = head
                     rel["head"] = (entitie_start_list[head], entitie_end_list[head])
@@ -157,8 +157,7 @@ class VQAReTokenMetric(nn.Metric):
 
                 # boundaries mode only takes argument spans into account
                 elif mode == "boundaries":
-                    pred_rels = {(rel["head"], rel["tail"]) for rel in pred_sent if
-                                 rel["type"] == rel_type}
+                    pred_rels = {(rel["head"], rel["tail"]) for rel in pred_sent if rel["type"] == rel_type}
                     gt_rels = set()
                     for rel in gt_sent:
                         if rel["type"] == rel_type:

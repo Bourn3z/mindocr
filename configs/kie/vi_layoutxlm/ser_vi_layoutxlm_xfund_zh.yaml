@@ -3,7 +3,7 @@ system:
   distribute: False
   amp_level: 'O0'
   seed: 42
-  # log_interval: 10
+  log_interval: 10
   val_while_train: True
   drop_overflow_update: False
 
@@ -11,16 +11,21 @@ model:
   type: kie
   transform: null
   backbone:
-    name: layoutxlm_for_ser
-    pretrained: True
-    checkpoints: 
+    name: layoutxlm
+    pretrained: False
     num_classes: &num_classes 7
-    mode: vi
+    use_visual_backbone: False
     use_float16: True
+  head :
+    name: TokenClassificationHead
+    num_classes: 7
+    use_visual_backbone: True
+    use_float16: True
+  pretrained: ser-vi-layoutxlm.ckpt
 
 postprocess:
   name: VQASerTokenLayoutLMPostProcess
-  class_path: &class_path train_data/XFUND/class_list_xfun.txt
+  class_path: &class_path path/to/class_list_xfun.txt
 
 metric:
   name: VQASerTokenMetric
@@ -29,12 +34,11 @@ metric:
 loss:
   name: VQASerTokenLayoutLMLoss
   num_classes: *num_classes
-  key: "backbone_out"
 
 scheduler:
   scheduler: polynomial_decay
-  lr: 0.00005
-  min_lr: 0.0000002
+  lr: 5.0e-5
+  min_lr: 2.0e-7
   num_epochs: 200
   warmup_epochs: 2
 
@@ -48,8 +52,8 @@ train:
   dataset_sink_mode: False
   dataset:
     type: KieDataset
-    dataset_root: train_data/
-    data_dir: XFUND/zh_train/image
+    dataset_root: path/to/train_data/
+    data_dir: datasetname/zh_train/image
     label_file: XFUND/zh_train/train.json
     sample_ratio: 1.0
     transform_pipeline:
@@ -90,7 +94,7 @@ eval:
   dataset_sink_mode: False
   dataset:
     type: KieDataset
-    dataset_root: train_data/
+    dataset_root: path/to/train_data/
     data_dir: XFUND/zh_val/image
     label_file: XFUND/zh_val/val.json
     sample_ratio: 1.0

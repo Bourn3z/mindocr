@@ -4,8 +4,9 @@ import os
 import yaml
 from addict import Dict
 
-from mindspore import nn, ops
 import mindspore as ms
+from mindspore import nn, ops
+
 from .resnet import ShapeSpec, build_resnet_backbone
 
 

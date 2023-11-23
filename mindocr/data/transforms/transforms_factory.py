@@ -6,14 +6,14 @@ from typing import Dict, List
 
 import numpy as np
 
-from mindocr.data.transforms.det_east_transforms import *
-from mindocr.data.transforms.det_fce_transforms import *
-from mindocr.data.transforms.det_transforms import *
-from mindocr.data.transforms.general_transforms import *
-from mindocr.data.transforms.rec_abinet_transforms import *
-from mindocr.data.transforms.rec_transforms import *
-from mindocr.data.transforms.svtr_transform import *
-from mindocr.data.transforms.layoutlm_transforms import *
+from .det_east_transforms import *
+from .det_fce_transforms import *
+from .det_transforms import *
+from .general_transforms import *
+from .layoutlm_transforms import *
+from .rec_abinet_transforms import *
+from .rec_transforms import *
+from .svtr_transform import *
 
 __all__ = ["create_transforms", "run_transforms", "transforms_dbnet_icdar15"]
 _logger = logging.getLogger(__name__)

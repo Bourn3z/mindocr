@@ -7,7 +7,7 @@ from .heads import build_head
 from .necks import build_neck
 from .transforms import build_trans
 
-__all__ = ['BaseModel']
+__all__ = ["BaseModel"]
 
 
 class BaseModel(nn.Cell):
@@ -23,83 +23,97 @@ class BaseModel(nn.Cell):
         super(BaseModel, self).__init__()
 
         config = Dict(config)
-        self.type = config.type
+        if config.type == "kie":
+            self.is_kie = True
+
         if config.transform:
-            transform_name = config.transform.pop('name')
+            transform_name = config.transform.pop("name")
             self.transform = build_trans(transform_name, **config.transform)
         else:
             self.transform = None
 
-        backbone_name = config.backbone.pop('name')
+        backbone_name = config.backbone.pop("name")
         self.backbone = build_backbone(backbone_name, **config.backbone)
 
-        if self.type == "kie":
-            self.neck = None
-            self.head = None
-            self.model_name = backbone_name
+        assert hasattr(self.backbone, "out_channels"), (
+            f"Backbones are required to provide out_channels attribute, "
+            f"but not found in {backbone_name}"
+        )
+        if "neck" not in config or config.neck is None:
+            neck_name = "Select"
+        if self.is_kie:
+            neck_name = "Identity"
         else:
-            assert hasattr(self.backbone, 'out_channels'), f'Backbones are required ' \
-                                                           f'to provide out_channels attribute, ' \
-                                                           f'but not found in {backbone_name}'
+            neck_name = config.neck.pop("name")
+        self.neck = build_neck(
+            neck_name, in_channels=self.backbone.out_channels, **config.neck
+        )
 
-            if 'neck' not in config or config.neck is None:
-                neck_name = 'Select'
-            else:
-                neck_name = config.neck.pop('name')
-            self.neck = build_neck(neck_name, in_channels=self.backbone.out_channels, **config.neck)
+        assert hasattr(self.neck, "out_channels"), (
+            f"Necks are required to provide out_channels attribute, "
+            f"but not found in {neck_name}"
+        )
 
-            assert hasattr(self.neck, 'out_channels'), f'Necks are required to provide out_channels attribute, ' \
-                                                       f'but not found in {neck_name}'
+        head_name = config.head.pop("name")
+        self.head = build_head(
+            head_name, in_channels=self.neck.out_channels, **config.head
+        )
 
-            head_name = config.head.pop('name')
-            self.head = build_head(head_name, in_channels=self.neck.out_channels, **config.head)
+        self.model_name = f"{backbone_name}_{neck_name}_{head_name}"
 
-            self.model_name = f'{backbone_name}_{neck_name}_{head_name}'
+    def kie_construct(self, *args):
+        if self.backbone.use_visual_backbone is True:
+            image = args[4]
+        else:
+            image = None
+
+        x = self.backbone(
+            input_ids=args[0],
+            bbox=args[1],
+            attention_mask=args[2],
+            token_type_ids=args[3],
+            image=image,
+            position_ids=None,
+            head_mask=None,
+        )
+        x = self.head(x, args[0])
+
+        return x
 
     def construct(self, *args):
-        if self.type == "kie":
-            x = args
-        else:
-            x = args[0]
+        if self.is_kie is True:
+            return self.kie_construct(*args)
 
+        x = args[0]
         if self.transform is not None:
             x = self.transform(x)
 
         # TODO: return bout, hout for debugging, using a dict.
-        x = self.backbone(x)
+        bout = self.backbone(x)
 
-        if self.neck is not None:
-            x = self.neck(x)
+        nout = self.neck(bout)
 
-        if self.head is not None:
-            if len(args) > 1:
-                x = self.head(x, args[1:])
-            else:
-                x = self.head(x)
+        if len(args) > 1:
+            hout = self.head(nout, args[1:])
+        else:
+            hout = self.head(nout)
+
         # resize back for postprocess
         # y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
 
-        return x
+        return hout
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     model_config = {
-            "backbone": {
-                'name': 'det_resnet50',
-                'pretrained': False
-                },
-            "neck": {
-                "name": 'FPN',
-                "out_channels": 256,
-                },
-            "head": {
-                "name": 'ConvHead',
-                "out_channels": 2,
-                "k": 50
-                }
-
-            }
-    model_config.pop('neck')
+        "backbone": {"name": "det_resnet50", "pretrained": False},
+        "neck": {
+            "name": "FPN",
+            "out_channels": 256,
+        },
+        "head": {"name": "ConvHead", "out_channels": 2, "k": 50},
+    }
+    model_config.pop("neck")
     model = BaseModel(model_config)
 
     import time
@@ -115,7 +129,7 @@ if __name__ == '__main__':
     def predict(model, x):
         start = time.time()
         y = model(x)
-        print(time.time()-start)
+        print(time.time() - start)
         print(y.shape)
 
     predict(model, x)

@@ -1,11 +1,9 @@
-import math
 from dataclasses import dataclass
 from typing import Optional
 
-import mindspore as ms
 import numpy as np
+
 from mindspore import nn
-from mindspore.common.initializer import initializer, HeUniform
 
 
 @dataclass

@@ -8,14 +8,14 @@
 ## 1. 模型描述
 <!--- Guideline: Introduce the model and architectures. Cite if you use/adopt paper explanation from others. -->
 
-LayoutXLM是LayoutLMv2的多语言版本，与初版LayoutLM（图像embedding在fine-tune阶段融合）不同，LayoutXLM在预训练阶段就整合视觉信息，并利用Transformer架构学习文本和图像的跨模态交互信息。此外，收到1-D相对位置表征的启发，论文提出spatial-aware self-attention（空间感知自注意力）机制，对token pair进行2-D相对位置表征。与利用绝对2-D位置embedding建模文档布局不同的是，相对位置embedding能够清晰地为上下文空间建模提供更大地视野。
+LayoutXLM是LayoutLMv2[<a href="#参考文献">2</a>]的多语言版本，与初版LayoutLM（图像embedding在fine-tune阶段融合）不同，LayoutXLM在预训练阶段就整合视觉信息，并利用Transformer架构学习文本和图像的跨模态交互信息。此外，受到1-D相对位置表征的启发，论文提出spatial-aware self-attention（空间感知自注意力）机制，对token pair进行2-D相对位置表征。与利用绝对2-D位置embedding建模文档布局不同的是，相对位置embedding能够清晰地为上下文空间建模提供更大的感受野。
 
-如架构图（图 1）所示，LayoutXLM(LayoutLMv2)建立了一个多模态Transformer架构作为LayoutLMv2的backbone，backbone以文本、图像以及布局信息作为输入，建立深度跨模态交互。同时提出spatial-aware self-attention（空间感知自注意力）机制，使得模型能够更好地建模文档布局。
+如架构图（图 1）所示，LayoutXLM(LayoutLMv2)采用多模态Transformer架构作为backbone，backbone以文本、图像以及布局信息作为输入，建立深度跨模态交互。同时提出spatial-aware self-attention（空间感知自注意力）机制，使得模型能够更好地建模文档布局。
 
-### Text Embedding 
+### Text Embedding
 以WordPiece对OCR文本序列进行tokenize，并将每个token标记为{[A], [B]}。然后，将[CLS]加到序列头，[SEP]加到文本段尾。额外的[PAD]token被添加到序列尾部，使得整个序列长度与最大序列长L相同。最终text embedding是三个embedding的和，其中token embedding代表token本身，1-D position embedding表示token索引，segment embedding用于区分不同文本段。
 
-### Visual Embedding 
+### Visual Embedding
 尽管所有需要的信息都在页面图像中，但模型很难通过单一的information-rich表征抓取其中的细节特征。因此，利用基于CNN的视觉encoder输出页面feature map，同时也能将页面图像转换为固定长度的序列。使用ResNeXt-FPN架构作为backbone，其参数可以通过反向传播训练。
 对于给定的页面图像I，其被resize到224×224后进入visual backbone。之后输出的feature map通过average pooling到一个固定的尺寸：宽为W、高为H。之后将其flatten为W×H长度的visual embedding序列，并通过线性投影层将维度对齐text embedding。因为基于CNN的视觉backbone不能获取位置信息，所以还需加入1-D position embedding，这些position embedding与text embedding所共享。对于segment embedding，所有的visual token都被分配到[C]。
 
@@ -24,7 +24,7 @@ Layout embedding层是用于空间布局信息表征，这种表征来自OCR识�
 
 ### Multi-modal Encoder with Spatial-Aware Self-Attention Mechanism
 Encoder concat视觉embedding和文本embedding到一个统一的序列，并与layout embedding相加以混合空间信息。遵循Transformer架构，模型用一堆多头自注意力层构建了多模态encoder，而后面则是前馈网络。但是原始的自注意力方法只会抓取输入token之间的绝对位置关系。为了有效地建模文档布局中的局部不变性，有必要显示插入相对位置位置信息。因此我们提出spatial-aware self-attention（空间感知自注意力）机制，将其加入self-attention层。在原始的self-attention层得到的αij后。考虑到位置范围较大，因此建模语义相对位置和空间相对位置，作为偏置项以免加入过多的参数。用三个偏置分别代表可学习的1-D和2-D(x, y)相对位置偏置。这些偏置在每个注意力头是不同的，但在每一层是一致的。假设boudning box(xi,yi)，算出其三个偏置项与αij相加得到自注意力map，最后按照Transformer的方式求出最终的注意力得分。
- [<a href="#参考文献">1</a>][<a href="#参考文献">2</a>]
+ [<a href="#参考文献">1</a>] [<a href="#参考文献">2</a>]
 
 <!--- Guideline: If an architecture table/figure is available in the paper, put one here and cite for intuitive illustration. -->
 
@@ -53,8 +53,8 @@ Table Format:
 <div align="center">
 
 | **模型** |**任务** |**环境配置** | **训练集** | **参数量** | **单卡批量** | **图模式单卡训练 (s/epoch)** | **图模式单卡训练 (ms/step)** | **图模式单卡训练 (FPS)** | **hmean** | **配置文件** | **模型权重下载** |
-| :-----: | :-----: |:-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: 
-| VI-LayoutXLM | SER | 910A-MS2.1 | XFUND_zh | 265.7 M | 4 |  7.53 | 203.48 | 19.66 | 93.31%  | [yaml](https://github.com/mindspore-lab/mindocr/blob/main/configs/kie/vi_layoutxlm/ser_vi_layoutxlm_xfund_zh.yaml)     | [ckpt](https://download.mindspore.cn/toolkits/mindocr/vi_layoutxlm/ser_vi_layoutxlm.ckpt) |
+| :-----: | :-----: |:-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----: | :-----:
+| VI-LayoutXLM | SER | D910Ax1-MS2.1-G | XFUND_zh | 265.7 M | 4 |  7.53 | 203.48 | 19.66 | 93.31%  | [yaml](https://github.com/mindspore-lab/mindocr/blob/main/configs/kie/vi_layoutxlm/ser_vi_layoutxlm_xfund_zh.yaml)     | [ckpt](https://download.mindspore.cn/toolkits/mindocr/vi_layoutxlm/ser_vi_layoutxlm.ckpt) |
 </div>
 
 
@@ -127,7 +127,7 @@ cd ..
 
 **模型训练的数据配置**
 
-如欲重现模型的训练，建议修改配置yaml如下：
+如欲重现模型的训练，建议修改配置yaml的数据集相关字段如下：
 
 ```yaml
 ...
@@ -137,7 +137,7 @@ train:
     type: KieDataset
     dataset_root: path/to/dataset/                                      # 训练数据集根目录
     data_dir: XFUND/zh_train/image/                                     # 训练数据集目录，将与`dataset_root`拼接形成完整训练数据集目录
-    label_file: XFUND/zh_train/train.json                                 # 训练数据集的标签文件路径，将与`dataset_root`拼接形成完整的训练数据的标签文件路径。
+    label_file: XFUND/zh_train/train.json                               # 训练数据集的标签文件路径，将与`dataset_root`拼接形成完整的训练数据的标签文件路径。
 ...
 eval:
   dataset:
@@ -149,7 +149,7 @@ eval:
 ```
 
 #### 3.1.4 检查配置文件
-除了数据集的设置，请同时重点关注以下变量的配置：`system.distribute`, `system.val_while_train`, `train.loader.batch_size`, `train.ckpt_save_dir`, `train.dataset.dataset_root`, `train.dataset.data_dir`, `train.dataset.label_file`,
+除了数据集的设置，请同时重点关注以下配置项：`system.distribute`, `system.val_while_train`, `train.loader.batch_size`, `train.ckpt_save_dir`, `train.dataset.dataset_root`, `train.dataset.data_dir`, `train.dataset.label_file`,
 `eval.ckpt_load_path`, `eval.dataset.dataset_root`, `eval.dataset.data_dir`, `eval.dataset.label_file`, `eval.loader.batch_size`。说明如下：
 
 ```yaml
@@ -168,7 +168,7 @@ model:
     pretrained: False
     checkpoints: path/to/ser_vi_layoutxlm.ckpt                          # 导入ckpt位置
     num_classes: &num_classes 7
-    mode: vi                                                          
+    mode: vi
 ...
 train:
   ckpt_save_dir: './tmp_kie_ser'                                        # 训练结果（包括checkpoint、每个epoch的性能和曲线图）保存目录
@@ -198,7 +198,7 @@ eval:
 ### 3.2 模型训练
 <!--- Guideline: Avoid using shell script in the command line. Python script preferred. -->
 * 转换PaddleOCR模型
-  
+
 如果要导入PaddleOCR LayoutXLM模型，可以使用`tools/param_converter.py`脚本将pdparams文件转换为mindspore支持的ckpt格式，并导入续训。
 
 ```shell

@@ -47,16 +47,16 @@ class VQATokenLabelEncode:
     """
 
     def __init__(
-            self,
-            class_path,
-            contains_re=False,
-            add_special_ids=False,
-            algorithm="LayoutXLM",
-            use_textline_bbox_info=True,
-            order_method=None,
-            infer_mode=False,
-            ocr_engine=None,
-            **kwargs
+        self,
+        class_path,
+        contains_re=False,
+        add_special_ids=False,
+        algorithm="LayoutXLM",
+        use_textline_bbox_info=True,
+        order_method=None,
+        infer_mode=False,
+        ocr_engine=None,
+        **kwargs,
     ):
         super(VQATokenLabelEncode, self).__init__()
         tokenizer_dict = {
@@ -73,7 +73,8 @@ class VQATokenLabelEncode:
         self.order_method = order_method
         if self.order_method not in [None, "tb-yx"]:
             raise ValueError(
-                f"The order_method of VQATokenLabelEncode must be None or 'tb-yx', but got {self.order_method}")
+                f"The order_method of VQATokenLabelEncode must be None or 'tb-yx', but got {self.order_method}"
+            )
 
     def split_bbox(self, bbox, text, tokenizer):
         words = text.split()
@@ -293,16 +294,16 @@ class VQATokenLabelEncode:
 
 class VQATokenPad:
     def __init__(
-            self,
-            max_seq_len=512,
-            pad_to_max_seq_len=True,
-            return_attention_mask=True,
-            return_token_type_ids=True,
-            truncation_strategy="longest_first",
-            return_overflowing_tokens=False,
-            return_special_tokens_mask=False,
-            infer_mode=False,
-            **kwargs
+        self,
+        max_seq_len=512,
+        pad_to_max_seq_len=True,
+        return_attention_mask=True,
+        return_token_type_ids=True,
+        truncation_strategy="longest_first",
+        return_overflowing_tokens=False,
+        return_special_tokens_mask=False,
+        infer_mode=False,
+        **kwargs,
     ):
         self.max_seq_len = max_seq_len
         self.pad_to_max_seq_len = max_seq_len
@@ -460,7 +461,7 @@ class VQAReTokenChunk:
                     if self.infer_mode and key == "labels":
                         item[key] = data[key]
                     else:
-                        item[key] = data[key][index: index + self.max_seq_len]
+                        item[key] = data[key][index : index + self.max_seq_len]
                 else:
                     item[key] = data[key]
             # select entity in current chunk
@@ -468,8 +469,8 @@ class VQAReTokenChunk:
             global_to_local_map = {}  #
             for entity_id, entity in enumerate(entities):
                 if (
-                        index <= entity["start"] < index + self.max_seq_len
-                        and index <= entity["end"] < index + self.max_seq_len
+                    index <= entity["start"] < index + self.max_seq_len
+                    and index <= entity["end"] < index + self.max_seq_len
                 ):
                     entity["start"] = entity["start"] - index
                     entity["end"] = entity["end"] - index
@@ -480,8 +481,8 @@ class VQAReTokenChunk:
             relations_in_this_span = []
             for relation in relations:
                 if (
-                        index <= relation["start_index"] < index + self.max_seq_len
-                        and index <= relation["end_index"] < index + self.max_seq_len
+                    index <= relation["start_index"] < index + self.max_seq_len
+                    and index <= relation["end_index"] < index + self.max_seq_len
                 ):
                     relations_in_this_span.append(
                         {
@@ -525,15 +526,15 @@ class TensorizeEntitiesRelations:
         entities_new[0, 0] = len(entities["start"])
         entities_new[0, 1] = len(entities["end"])
         entities_new[0, 2] = len(entities["label"])
-        entities_new[1: len(entities["start"]) + 1, 0] = np.array(entities["start"])
-        entities_new[1: len(entities["end"]) + 1, 1] = np.array(entities["end"])
-        entities_new[1: len(entities["label"]) + 1, 2] = np.array(entities["label"])
+        entities_new[1 : len(entities["start"]) + 1, 0] = np.array(entities["start"])
+        entities_new[1 : len(entities["end"]) + 1, 1] = np.array(entities["end"])
+        entities_new[1 : len(entities["label"]) + 1, 2] = np.array(entities["label"])
 
         relations_new = np.full(shape=[self.max_seq_len * self.max_seq_len + 1, 2], fill_value=-1, dtype="int64")
         relations_new[0, 0] = len(relations["head"])
         relations_new[0, 1] = len(relations["tail"])
-        relations_new[1: len(relations["head"]) + 1, 0] = np.array(relations["head"])
-        relations_new[1: len(relations["tail"]) + 1, 1] = np.array(relations["tail"])
+        relations_new[1 : len(relations["head"]) + 1, 0] = np.array(relations["head"])
+        relations_new[1 : len(relations["tail"]) + 1, 1] = np.array(relations["tail"])
 
         data["entities"] = entities_new
         data["relations"] = relations_new

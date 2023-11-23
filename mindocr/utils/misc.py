@@ -29,6 +29,7 @@ class AverageMeter:
 
 
 def fetch_optimizer_lr(opt):
+    # print(f"Before, global step: {opt.global_step}")
     lr = opt.learning_rate
     if opt.dynamic_lr:
         if opt.is_group_lr:
@@ -38,6 +39,7 @@ def fetch_optimizer_lr(opt):
                 lr += (cur_dynamic_lr,)
         else:
             lr = opt.learning_rate(opt.global_step - 1).reshape(())
+    # print(f"After, global step: {opt.global_step}")
     return lr
 
 

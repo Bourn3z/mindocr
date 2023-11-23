@@ -1,23 +1,22 @@
-__all__ = ['build_neck']
+__all__ = ["build_neck"]
 supported_necks = [
-    'FPN',
-    'DBFPN',
-    'RNNEncoder',
-    'Select',
-    'Img2Seq',
-    'PSEFPN',
-    'EASTFPN',
-    'FCEFPN',
-    'MasterEncoder',
-    'RSEFPN',
-    'YOLOv8Neck',
+    "FPN",
+    "DBFPN",
+    "RNNEncoder",
+    "Select",
+    "Img2Seq",
+    "PSEFPN",
+    "EASTFPN",
+    "FCEFPN",
+    "MasterEncoder",
+    "Identity",
 ]
-from .fpn import DBFPN, EASTFPN, FCEFPN, FPN, PSEFPN, RSEFPN
+from .fpn import DBFPN, EASTFPN, FCEFPN, FPN, PSEFPN
+from .identity import Identity
 from .img2seq import Img2Seq
 from .master_encoder import MasterEncoder
 from .rnn import RNNEncoder
 from .select import Select
-from .yolov8_neck import YOLOv8Neck
 
 
 def build_neck(neck_name, **kwargs):
@@ -42,6 +41,8 @@ def build_neck(neck_name, **kwargs):
         >>> neck = build_neck(**config)
         >>> print(neck)
     """
-    assert neck_name in supported_necks, f'Invalid neck: {neck_name}, Support necks are {supported_necks}'
+    assert (
+        neck_name in supported_necks
+    ), f"Invalid neck: {neck_name}, Support necks are {supported_necks}"
     neck = eval(neck_name)(**kwargs)
     return neck
